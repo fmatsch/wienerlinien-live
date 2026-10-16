@@ -52,9 +52,6 @@ deploy/           systemd-Unit und Caddy-Snippet für den API-Server
 docs/             GitHub-Pages-Projektseite
 ```
 
-Die Apps enthalten die Weboberfläche und holen die Daten von der öffentlichen API
-(`https://www.depes.ch/wl-api`, Cache-Proxy). Wer selbst hosten will: `make run` startet Backend und Frontend lokal
-(`http://127.0.0.1:4731`), `WL_API=https://…` stellt die Apps auf einen eigenen Server um.
 
 ## Entwickeln
 
