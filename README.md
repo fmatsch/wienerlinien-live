@@ -8,7 +8,7 @@
 
 Berechnete Live-Positionen aller Wiener U-Bahn-Züge (U1, U2, U3, U4, U6) und von 27 Straßenbahnlinien auf einer Karte.
 Die Wiener Linien liefern keine GPS-Daten, nur Abfahrtsprognosen pro Haltepunkt. Die Züge werden daraus rekonstruiert.
-Privates, inoffizielles Projekt.
+Privates, inoffizielles Projekt. Die Apps enthalten alles Nötige und brauchen nur eine Internetverbindung.
 
 ## Fertige Apps herunterladen
 
