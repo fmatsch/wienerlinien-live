@@ -1,4 +1,4 @@
-data/
+/data/
 recordings/
 __pycache__/
 *.pyc
