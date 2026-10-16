@@ -1,0 +1,99 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            arch: arm64
+            args: --mac --arm64
+          - os: macos-latest
+            arch: x64
+            args: --mac --x64
+          - os: windows-latest
+            arch: x64
+            args: --win --x64
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      # The app reports the version of the release tag.
+      - name: Versionsnummer aus dem Tag übernehmen
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+      - run: npm ci
+      - run: npm run prepare-web
+      - run: npx electron-builder ${{ matrix.args }} --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            app/dist/*.dmg
+            app/dist/*.zip
+            app/dist/*.exe
+            app/dist/*.exe.blockmap
+            app/dist/latest*.yml
+          if-no-files-found: error
+
+  hackberry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Versionsnummer aus dem Tag übernehmen
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          python3 - "${GITHUB_REF_NAME#v}" <<'EOF'
+          import json, sys
+          p = 'app/package.json'
+          d = json.load(open(p)); d['version'] = sys.argv[1]
+          json.dump(d, open(p, 'w'), indent=2, ensure_ascii=False)
+          EOF
+      - run: python3 scripts/package_hackberry.py dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hackberry
+          path: dist/wienerlinien-live-hackberry.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs: [build, hackberry]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Prüfsummen
+        run: |
+          cd artifacts
+          sha256sum *.dmg *.zip *.exe *.tar.gz > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" artifacts/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Wiener Linien Live ${GITHUB_REF_NAME#v}" \
+            --generate-notes

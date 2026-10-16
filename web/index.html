@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>U-Bahn Wien live</title>
+<meta name="description" content="Berechnete Live-Positionen aller Wiener U-Bahn-Züge aus den Echtzeit-Abfahrtsdaten der Wiener Linien.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23E3000F'/%3E%3Cpath d='M9 8v10a7 7 0 0 0 14 0V8' fill='none' stroke='white' stroke-width='3.4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="style.css?v=20261017a">
+</head>
+<body>
+<header>
+  <div class="title">
+    <div class="modeswitch" role="group" aria-label="Verkehrsmittel" data-mode="u">
+      <span class="thumb" aria-hidden="true"></span>
+      <button data-mode="u" aria-pressed="true" aria-label="U-Bahn" title="U-Bahn">U</button>
+      <button data-mode="tram" aria-pressed="false" aria-label="Straßenbahn" title="Straßenbahn">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M8 2h8"/><rect x="5" y="5" width="14" height="12" rx="3"/><path d="M5 11h14M9 21l1.5-4M15 21l-1.5-4M9 14h.01M15 14h.01"/></svg>
+      </button>
+    </div>
+    <h1 id="h1">U-Bahn Wien <small>live</small></h1>
+  </div>
+  <nav class="views" role="tablist" aria-label="Ansicht">
+    <button role="tab" id="tab-map" aria-selected="true">Karte</button>
+    <button role="tab" id="tab-net" aria-selected="false">Netzplan</button>
+  </nav>
+  <div class="filters" id="filters" aria-label="Linienfilter"></div>
+  <div class="status" id="status" aria-live="polite"><span class="dot"></span><span id="status-text">lädt …</span></div>
+</header>
+<main>
+  <div id="map"></div>
+  <div id="net" hidden></div>
+  <div class="notice" id="notice" hidden></div>
+</main>
+<section id="debug" hidden>
+  <div class="debug-head"><strong>Debug</strong> <span id="debug-meta"></span>
+    <label>Linie <select id="debug-line"></select></label></div>
+  <div id="debug-body"></div>
+</section>
+<div class="update" id="update" hidden><span id="update-text"></span><button id="update-btn" class="update-btn"></button></div>
+<footer>
+  <span>Datenquelle: Stadt Wien – <a href="https://data.wien.gv.at">data.wien.gv.at</a> / Wiener Linien (CC BY 4.0)</span>
+  <span>Positionen sind aus Abfahrtsprognosen <em>berechnet</em>, keine GPS-Daten.</span>
+  <span id="app-version"></span><button id="debug-toggle" class="link">Debug</button>
+</footer>
+<script src="vendor/leaflet.js"></script>
+<script src="config.js?v=20261017a"></script>
+<script src="app.js?v=20261017a"></script>
+</body>
+</html>

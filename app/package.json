@@ -1,0 +1,70 @@
+{
+  "name": "wienerlinien-live",
+  "productName": "Wiener Linien Live",
+  "version": "1.0.0",
+  "description": "Live positions of Vienna's U-Bahn and tram vehicles, computed from the real-time departure data (unofficial).",
+  "author": "fmatsch",
+  "license": "MIT",
+  "homepage": "https://fmatsch.github.io/wienerlinien-live/",
+  "repository": "github:fmatsch/wienerlinien-live",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "prepare-web": "node scripts/prepare-web.mjs",
+    "start": "npm run prepare-web && electron .",
+    "dist": "npm run prepare-web && electron-builder --publish never",
+    "dist:mac": "npm run prepare-web && electron-builder --mac --publish never",
+    "dist:win": "npm run prepare-web && electron-builder --win --publish never"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "io.github.fmatsch.wienerlinienlive",
+    "productName": "Wiener Linien Live",
+    "artifactName": "Wiener-Linien-Live-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "updater.js",
+      "release.js",
+      "web/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.navigation",
+      "icon": "build/icon.png",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "fmatsch",
+        "repo": "wienerlinien-live",
+        "releaseType": "release"
+      }
+    ]
+  }
+}

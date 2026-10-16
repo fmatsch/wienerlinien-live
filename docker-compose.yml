@@ -1,0 +1,7 @@
+services:
+  ubahn:
+    build: .
+    ports: ["4731:4731"]
+    restart: unless-stopped
+    environment:
+      WL_INTERVAL: "30"

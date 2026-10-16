@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wiener Linien Live – U-Bahn und Straßenbahn in Echtzeit</title>
+<meta name="description" content="Berechnete Live-Positionen der Wiener U-Bahn und Straßenbahn auf einer Karte – als App für macOS, Windows und Raspberry Pi (Hackberry) mit automatischem Update.">
+<link rel="icon" href="icon.png">
+<meta property="og:title" content="Wiener Linien Live">
+<meta property="og:description" content="U-Bahn und Straßenbahn in Echtzeit – für macOS, Windows und Raspberry Pi.">
+<meta property="og:image" content="screenshot-ubahn.jpg">
+<style>
+  :root { --bg:#f6f6f4; --fg:#1c1c1e; --muted:#62626a; --card:#fff; --line:#dcdcd6; --accent:#E3000F; --accent-fg:#fff; --code:#efefeb; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#141416; --fg:#ececee; --muted:#9a9aa2; --card:#1d1d20; --line:#303034; --code:#0f0f11; }
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:940px; margin:0 auto; padding:0 20px; }
+  header { text-align:center; padding:56px 20px 34px; }
+  header img { width:104px; height:104px; border-radius:23%; display:block; margin:0 auto 18px; box-shadow:0 8px 28px rgba(0,0,0,.25); }
+  h1 { font-size:40px; margin:0 0 6px; letter-spacing:-.02em; }
+  .tagline { font-size:19px; color:var(--muted); margin:0 auto; max-width:640px; }
+  .downloads { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:30px 0 8px; }
+  .btn { display:inline-flex; flex-direction:column; align-items:center; text-decoration:none; background:var(--accent); color:var(--accent-fg);
+         padding:12px 24px; border-radius:10px; font-weight:600; line-height:1.35; min-width:200px; box-shadow:0 2px 10px rgba(227,0,15,.25); transition:transform .12s; }
+  .btn:hover { transform:translateY(-1px); }
+  .btn small { font-weight:400; font-size:12px; opacity:.85; }
+  .btn.ghost { background:transparent; color:var(--fg); border:1px solid var(--line); box-shadow:none; justify-content:center; }
+  .hint { text-align:center; color:var(--muted); font-size:13px; margin:6px 0 0; }
+  section { padding:38px 0; border-top:1px solid var(--line); }
+  h2 { font-size:24px; margin:0 0 8px; letter-spacing:-.01em; }
+  p { margin:0 0 14px; }
+  .lead { color:var(--muted); margin-bottom:22px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:11px; padding:17px 19px; }
+  .card h3 { margin:0 0 5px; font-size:16px; }
+  .card p { margin:0; color:var(--muted); font-size:14px; }
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-top:6px; }
+  .shots figure { margin:0; }
+  .shots img { width:100%; border-radius:10px; border:1px solid var(--line); display:block; }
+  figcaption { font-size:13px; color:var(--muted); margin-top:6px; }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:10px; padding:12px 16px; overflow-x:auto; font-size:14px; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em; }
+  table { border-collapse:collapse; width:100%; font-size:15px; }
+  td, th { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  a { color:var(--accent); }
+  footer { border-top:1px solid var(--line); padding:26px 0 44px; color:var(--muted); font-size:13px; text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <img src="icon.png" alt="">
+  <h1>Wiener Linien Live</h1>
+  <p class="tagline">Wo fährt die U-Bahn gerade? Berechnete Live-Positionen aller U-Bahn-Linien und 27 Straßenbahnlinien auf einer Karte.</p>
+  <div class="downloads">
+    <a class="btn" href="https://github.com/fmatsch/wienerlinien-live/releases/latest/download/Wiener-Linien-Live-mac-arm64.dmg">macOS<small>Apple Silicon (M1 und neuer)</small></a>
+    <a class="btn" href="https://github.com/fmatsch/wienerlinien-live/releases/latest/download/Wiener-Linien-Live-mac-x64.dmg">macOS<small>Intel</small></a>
+    <a class="btn" href="https://github.com/fmatsch/wienerlinien-live/releases/latest/download/Wiener-Linien-Live-win-x64.exe">Windows<small>Installer (64 Bit)</small></a>
+    <a class="btn ghost" href="https://fmatsch.ist/wienerlinien/">Im Browser öffnen</a>
+  </div>
+  <p class="hint">Raspberry Pi / Hackberry: siehe <a href="#hackberry">unten</a>. Alle Downloads: <a href="https://github.com/fmatsch/wienerlinien-live/releases/latest">Releases</a>.</p>
+</header>
+
+<div class="wrap">
+<section>
+  <div class="shots">
+    <figure><img src="screenshot-ubahn.jpg" alt="Karte mit U-Bahn-Zügen" loading="lazy"><figcaption>U-Bahn: alle Züge von U1, U2, U3, U4 und U6</figcaption></figure>
+    <figure><img src="screenshot-tram.jpg" alt="Karte mit Straßenbahnen" loading="lazy"><figcaption>Straßenbahn: Linien einzeln zuschaltbar, hier 1, 2 und D</figcaption></figure>
+    <figure><img src="screenshot-hackberry.jpg" alt="Auf dem Hackberry Pi" loading="lazy"><figcaption>Auf dem Hackberry Pi (720 × 720)</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>Was die App kann</h2>
+  <div class="grid">
+    <div class="card"><h3>Karte und Netzplan</h3><p>Züge als Punkte mit Fahrtrichtung, Stationsnamen ab Zoomstufe 13, Tooltip mit nächster Station und Abfahrt. Zweite Ansicht als schematischer Netzplan.</p></div>
+    <div class="card"><h3>U-Bahn und Straßenbahn</h3><p>Umschalter oben links. Linien lassen sich einzeln ein- und ausblenden.</p></div>
+    <div class="card"><h3>Flüssige Bewegung</h3><p>Zwischen den Abfragen laufen die Züge auf Basis der Fahrzeiten weiter; Korrekturen werden weich eingeblendet.</p></div>
+    <div class="card"><h3>Automatische Updates</h3><p>Die App prüft beim Start und danach alle 6 Stunden, ob es eine neue Version gibt (siehe unten).</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>So entstehen die Positionen</h2>
+  <p class="lead">Die Wiener Linien liefern keine GPS-Daten, nur Abfahrtsprognosen pro Haltepunkt. Die Züge werden daraus rekonstruiert.</p>
+  <p>Die Abfahrten benachbarter Stationen werden verkettet (Abfahrt in Station <em>i</em> plus Fahrzeit ≈ Abfahrt in Station <em>i+1</em>), jede Kette ist ein Zug. Der Kopf der Kette legt fest, wo der Zug gerade ist: in der Station oder zwischen zwei Stationen. Wo Daten fehlen, wird der Zug ausgeblendet statt falsch gezeigt.</p>
+  <p><strong>Die Positionen sind berechnet und nur ungefähr richtig.</strong> Bei der U-Bahn liegt die Abweichung typischerweise im Bereich einer Station, bei der Straßenbahn ist sie größer (Straßenverkehr, weit entfernte Prognosen sind im Kern Fahrplan).</p>
+</section>
+
+<section id="updates">
+  <h2>Updates</h2>
+  <table>
+    <tr><th>Plattform</th><th>Wie das Update läuft</th></tr>
+    <tr><td>Windows</td><td>Automatisch im Hintergrund: Update wird geladen und beim Beenden installiert, die App bietet „Neu starten“ an.</td></tr>
+    <tr><td>macOS</td><td>Die App meldet eine neue Version und öffnet den Download. Ein stilles Update ist nur mit einem bezahlten Apple-Zertifikat möglich, das die App nicht hat.</td></tr>
+    <tr><td>Hackberry / Linux</td><td>Die App lädt das neue Paket, prüft die SHA-256-Prüfsumme, ersetzt sich selbst und startet nach einem Klick neu.</td></tr>
+  </table>
+  <p class="hint" style="text-align:left;margin-top:10px">Geprüft wird beim Start und alle 6 Stunden. Ohne Netz passiert nichts.</p>
+</section>
+
+<section id="hackberry">
+  <h2>Raspberry Pi / Hackberry</h2>
+  <p class="lead">Läuft in einem Chromium-App-Fenster, braucht nur Python 3 und Chromium. Ohne sudo, mit Desktop-Verknüpfung.</p>
+<pre><code>curl -LO https://github.com/fmatsch/wienerlinien-live/releases/latest/download/wienerlinien-live-hackberry.tar.gz
+tar xzf wienerlinien-live-hackberry.tar.gz
+./wienerlinien-live/install.sh</code></pre>
+  <p>Start über das Symbol auf dem Desktop, das Anwendungsmenü oder <code>~/.local/bin/wienerlinien-live</code>.</p>
+</section>
+
+<section>
+  <h2>Hinweise zur ersten Nutzung</h2>
+  <table>
+    <tr><td>macOS</td><td>Die App ist nicht signiert. Beim ersten Start im Finder per Rechtsklick auf <em>Öffnen</em> gehen und bestätigen.</td></tr>
+    <tr><td>Windows</td><td>SmartScreen meldet einen unbekannten Herausgeber: <em>Weitere Informationen → Trotzdem ausführen</em>.</td></tr>
+    <tr><td>Prüfsummen</td><td>Jedes Release enthält <code>SHA256SUMS.txt</code>.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Datenquellen und Rechtliches</h2>
+  <p>Echtzeitdaten, Haltestellen und Fahrpläne: Stadt Wien – <a href="https://data.wien.gv.at">data.wien.gv.at</a> / Wiener Linien (CC BY 4.0). Grundkarte: <a href="https://basemap.at">basemap.at</a> (CC BY 4.0). Die App fragt die Daten über einen Proxy mit Cache ab, damit die Abfragegrenzen der Wiener Linien eingehalten werden.</p>
+  <p>Dies ist ein privates, inoffizielles Projekt und steht in keiner Verbindung zu den Wiener Linien. Die angezeigten Positionen sind keine verbindliche Auskunft.</p>
+</section>
+</div>
+
+<footer>
+  <a href="https://github.com/fmatsch/wienerlinien-live">Quellcode auf GitHub</a> · MIT-Lizenz · <a href="https://fmatsch.ist/">fmatsch.ist</a>
+</footer>
+</body>
+</html>

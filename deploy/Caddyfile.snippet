@@ -1,0 +1,5 @@
+# Inside the www.depes.ch site block in /etc/caddy/depesche.caddy, before `handle @root`:
+handle /wl-api/* {
+	uri strip_prefix /wl-api
+	reverse_proxy 127.0.0.1:4731
+}

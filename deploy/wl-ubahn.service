@@ -1,0 +1,23 @@
+[Unit]
+Description=Wiener U-Bahn live map (API proxy + position engine)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/wl-ubahn/server.py
+WorkingDirectory=/opt/wl-ubahn
+Environment=WL_HOST=127.0.0.1
+Environment=WL_PORT=4731
+Environment=WL_INTERVAL=30
+Environment=WL_ORIGINS=https://fmatsch.ist,https://www.fmatsch.ist,http://127.0.0.1,http://localhost
+Environment=WL_CONTACT=
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+data/
+recordings/
+__pycache__/
+*.pyc
+node_modules/
+app/web/
+app/dist/
+dist/
+.DS_Store
+liebe/
