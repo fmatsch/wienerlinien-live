@@ -4,7 +4,7 @@ const API = (window.WL_API || '') + '/api/';
 const MODES = {u: {title: 'U-Bahn Wien', file: 'network.json'}, tram: {title: 'Straßenbahn Wien', file: 'network_tram.json'}};
 let mode = ls0('wl.mode', 'u');
 if (location.hash === '#tram') mode = 'tram'; else if (location.hash === '#u') mode = 'u';
-const BUILD = '20261017a';          // bump together with the ?v= in index.html: also busts cached network files
+const BUILD = '20261018a';          // bump together with the ?v= in index.html: also busts cached network files
 const api = (path) => API + path + (mode === 'tram' ? '?mode=tram' : '');
 let LINES = [];
 const colorOf = (line) => (net && net.lines[line] && net.lines[line].color) || '#888';
@@ -146,6 +146,19 @@ function applyFilter() {
   document.querySelectorAll('#net [data-line]').forEach((g) => { g.style.display = active.has(g.dataset.line) ? '' : 'none'; });
   document.querySelectorAll('.chip').forEach((b) => b.setAttribute('aria-pressed', active.has(b.dataset.line)));
   for (const tr of trains.values()) syncVisibility(tr);
+  updateCounts();
+}
+// number of vehicles per line, shown as a badge on the line chips (only for lines we currently have data for)
+function updateCounts() {
+  const counts = {};
+  for (const tr of trains.values()) counts[tr.data.line] = (counts[tr.data.line] || 0) + 1;
+  document.querySelectorAll('.chip').forEach((b) => {
+    const line = b.dataset.line, n = b.querySelector('.n'), c = counts[line] || 0;
+    const known = lastOk > 0 && active.has(line);          // trams: only the lines that are polled right now
+    n.hidden = !known;
+    n.textContent = c;
+    b.title = known ? `${line}: ${c} ${c === 1 ? (mode === 'tram' ? 'Bahn' : 'Zug') : (mode === 'tram' ? 'Bahnen' : 'Züge')}` : '';
+  });
 }
 function syncVisibility(tr) {
   const on = active.has(tr.data.line);
@@ -176,6 +189,7 @@ function onData(res) {
     tr.ghost = d.ghost;
   }
   for (const [id, tr] of trains) if (!seen.has(id)) { if (tr.marker) map.removeLayer(tr.marker); if (tr.g) tr.g.remove(); trains.delete(id); }
+  updateCounts();
 }
 
 function frame() {
@@ -298,7 +312,7 @@ async function loadMode(m) {
   $('#debug-line').innerHTML = '';
   for (const line of LINES) {
     const b = document.createElement('button');
-    b.className = 'chip'; b.textContent = line; b.dataset.line = line; b.style.setProperty('--c', colorOf(line));
+    b.className = 'chip'; b.innerHTML = `<span>${line}</span><span class="n" hidden></span>`; b.dataset.line = line; b.style.setProperty('--c', colorOf(line));
     b.addEventListener('click', () => { active.has(line) ? active.delete(line) : active.add(line); ls.set('wl.lines.' + m, [...active]); applyFilter(); pollNow(); });
     f.appendChild(b);
     $('#debug-line').insertAdjacentHTML('beforeend', `<option>${line}</option>`);

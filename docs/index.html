@@ -76,7 +76,7 @@
   <h2>Was die App kann</h2>
   <div class="grid">
     <div class="card"><h3>Karte und Netzplan</h3><p>Züge als Punkte mit Fahrtrichtung, Stationsnamen ab Zoomstufe 13, Tooltip mit nächster Station und Abfahrt. Zweite Ansicht als schematischer Netzplan.</p></div>
-    <div class="card"><h3>U-Bahn und Straßenbahn</h3><p>Umschalter oben links. Linien lassen sich einzeln ein- und ausblenden.</p></div>
+    <div class="card"><h3>U-Bahn und Straßenbahn</h3><p>Umschalter oben links. Linien lassen sich einzeln ein- und ausblenden; an jeder Linie steht, wie viele Züge bzw. Bahnen gerade fahren.</p></div>
     <div class="card"><h3>Flüssige Bewegung</h3><p>Zwischen den Abfragen laufen die Züge auf Basis der Fahrzeiten weiter; Korrekturen werden weich eingeblendet.</p></div>
     <div class="card"><h3>Automatische Updates</h3><p>Die App prüft beim Start und danach alle 6 Stunden, ob es eine neue Version gibt (siehe unten).</p></div>
   </div>
@@ -112,7 +112,7 @@ tar xzf wienerlinien-live-hackberry.tar.gz
 <section>
   <h2>Hinweise zur ersten Nutzung</h2>
   <table>
-    <tr><td>macOS</td><td>Die App ist nicht signiert. Beim ersten Start im Finder per Rechtsklick auf <em>Öffnen</em> gehen und bestätigen.</td></tr>
+    <tr><td>macOS</td><td>Die App ist nicht signiert. Beim ersten Start im Finder per Rechtsklick auf <em>Öffnen</em> gehen und bestätigen. Meldet macOS stattdessen, die App sei „beschädigt“ (sie ist nicht beglaubigt, nicht kaputt), im Terminal <code>xattr -cr "/Applications/Wiener Linien Live.app"</code> ausführen.</td></tr>
     <tr><td>Windows</td><td>SmartScreen meldet einen unbekannten Herausgeber: <em>Weitere Informationen → Trotzdem ausführen</em>.</td></tr>
     <tr><td>Prüfsummen</td><td>Jedes Release enthält <code>SHA256SUMS.txt</code>.</td></tr>
   </table>
