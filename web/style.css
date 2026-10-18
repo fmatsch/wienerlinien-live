@@ -69,3 +69,8 @@ footer a{color:inherit}
 .update-btn:hover{background:#fff;color:var(--accent)}
 #app-version{margin-left:auto;color:var(--mute)}
 #app-version + .link{margin-left:12px}
+/* vehicles per line */
+.chip{display:inline-flex;align-items:center;gap:6px}
+.chip .n{min-width:18px;padding:0 6px;border-radius:99px;background:rgba(255,255,255,.3);font-size:11px;line-height:18px;text-align:center}
+.chip[aria-pressed=false] .n{background:color-mix(in srgb,var(--c) 14%,transparent)}
+.chip .n[hidden]{display:none}

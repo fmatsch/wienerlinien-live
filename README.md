@@ -20,6 +20,8 @@ Privates, inoffizielles Projekt. Die Apps enthalten alles Nötige und brauchen n
 | Raspberry Pi / Linux | [`wienerlinien-live-hackberry.tar.gz`](https://github.com/fmatsch/wienerlinien-live/releases/latest/download/wienerlinien-live-hackberry.tar.gz) | lädt, prüft und installiert selbst |
 
 Die Apps sind nicht signiert: macOS beim ersten Start Rechtsklick → Öffnen, Windows SmartScreen „Weitere Informationen → Trotzdem ausführen“.
+Meldet macOS stattdessen, die App sei „beschädigt“ (Gatekeeper, die App ist nicht beglaubigt), hilft im Terminal:
+`xattr -cr "/Applications/Wiener Linien Live.app"`
 Prüfsummen: `SHA256SUMS.txt` in jedem Release.
 
 **Hackberry / Raspberry Pi** (nur Python 3 und Chromium nötig, kein sudo):
