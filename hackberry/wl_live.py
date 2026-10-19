@@ -187,7 +187,7 @@ def find_browser(url):
             # Wayland desktop (labwc on the Hackberry): Chromium falls back to X11 and dies unless told otherwise
             ozone = ['--ozone-platform=wayland'] if os.environ.get('WAYLAND_DISPLAY') and not os.environ.get('DISPLAY') else []
             return [exe, *ozone, '--app=' + url, '--user-data-dir=' + str(profile), '--start-maximized', '--no-first-run',
-                    '--no-default-browser-check', '--password-store=basic', '--disable-features=Translate',
+                    '--no-default-browser-check', '--password-store=basic', '--disable-features=Translate,TranslateUI,TranslateSubFrames', '--lang=de',
                     '--class=wienerlinien-live']
     exe = shutil.which('firefox') or shutil.which('firefox-esr')
     if exe:

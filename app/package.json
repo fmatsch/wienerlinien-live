@@ -1,7 +1,7 @@
 {
   "name": "wienerlinien-live",
   "productName": "Wiener Linien Live",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Live positions of Vienna's U-Bahn and tram vehicles, computed from the real-time departure data (unofficial).",
   "author": "fmatsch",
   "license": "MIT",
