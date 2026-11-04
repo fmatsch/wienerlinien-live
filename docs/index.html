@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wiener Linien Live – U-Bahn und Straßenbahn in Echtzeit</title>
-<meta name="description" content="Berechnete Live-Positionen der Wiener U-Bahn und Straßenbahn auf einer Karte – als App für macOS, Windows und Raspberry Pi (Hackberry) mit automatischem Update.">
+<meta name="description" content="Berechnete Live-Positionen der Wiener U-Bahn, Straßenbahn und Busse auf einer Karte – als App für macOS, Windows und Raspberry Pi (Hackberry) mit automatischem Update.">
 <link rel="icon" href="icon.png">
 <meta property="og:title" content="Wiener Linien Live">
 <meta property="og:description" content="U-Bahn und Straßenbahn in Echtzeit – für macOS, Windows und Raspberry Pi.">
@@ -53,7 +53,7 @@
 <header>
   <img src="icon.png" alt="">
   <h1>Wiener Linien Live</h1>
-  <p class="tagline">Wo fährt die U-Bahn gerade? Berechnete Live-Positionen aller U-Bahn-Linien und 27 Straßenbahnlinien auf einer Karte.</p>
+  <p class="tagline">Wo fährt die U-Bahn gerade? Berechnete Live-Positionen aller U-Bahn-Linien, von 27 Straßenbahnlinien und von Bussen auf einer Karte.</p>
   <div class="downloads">
     <a class="btn" href="https://github.com/fmatsch/wienerlinien-live/releases/latest/download/Wiener-Linien-Live-mac-arm64.dmg">macOS<small>Apple Silicon (M1 und neuer)</small></a>
     <a class="btn" href="https://github.com/fmatsch/wienerlinien-live/releases/latest/download/Wiener-Linien-Live-mac-x64.dmg">macOS<small>Intel</small></a>
@@ -76,7 +76,7 @@
   <h2>Was die App kann</h2>
   <div class="grid">
     <div class="card"><h3>Karte und Netzplan</h3><p>Züge als Punkte mit Fahrtrichtung, Stationsnamen ab Zoomstufe 13, Tooltip mit nächster Station und Abfahrt. Zweite Ansicht als schematischer Netzplan.</p></div>
-    <div class="card"><h3>U-Bahn und Straßenbahn</h3><p>Umschalter oben links. Linien lassen sich einzeln ein- und ausblenden; an jeder Linie steht, wie viele Züge bzw. Bahnen gerade fahren.</p></div>
+    <div class="card"><h3>U-Bahn, Straßenbahn und Bus</h3><p>Umschalter oben links. Linien lassen sich einzeln ein- und ausblenden; an jeder Linie steht, wie viele Züge, Bahnen bzw. Busse gerade fahren. Bei den rund 115 Buslinien wählst du die Linien über ein Suchfeld aus (bis zu 12 gleichzeitig).</p></div>
     <div class="card"><h3>Flüssige Bewegung</h3><p>Zwischen den Abfragen laufen die Züge auf Basis der Fahrzeiten weiter; Korrekturen werden weich eingeblendet.</p></div>
     <div class="card"><h3>Automatische Updates</h3><p>Die App prüft beim Start und danach alle 6 Stunden, ob es eine neue Version gibt (siehe unten).</p></div>
   </div>
@@ -86,7 +86,7 @@
   <h2>So entstehen die Positionen</h2>
   <p class="lead">Die Wiener Linien liefern keine GPS-Daten, nur Abfahrtsprognosen pro Haltepunkt. Die Züge werden daraus rekonstruiert.</p>
   <p>Die Abfahrten benachbarter Stationen werden verkettet (Abfahrt in Station <em>i</em> plus Fahrzeit ≈ Abfahrt in Station <em>i+1</em>), jede Kette ist ein Zug. Der Kopf der Kette legt fest, wo der Zug gerade ist: in der Station oder zwischen zwei Stationen. Wo Daten fehlen, wird der Zug ausgeblendet statt falsch gezeigt.</p>
-  <p><strong>Die Positionen sind berechnet und nur ungefähr richtig.</strong> Bei der U-Bahn liegt die Abweichung typischerweise im Bereich einer Station, bei der Straßenbahn ist sie größer (Straßenverkehr, weit entfernte Prognosen sind im Kern Fahrplan).</p>
+  <p><strong>Die Positionen sind berechnet und nur ungefähr richtig.</strong> Bei der U-Bahn liegt die Abweichung typischerweise im Bereich einer Station, bei Straßenbahn und Bus ist sie größer (Straßenverkehr, weit entfernte Prognosen sind im Kern Fahrplan). Nachtbusse sind noch nicht enthalten.</p>
 </section>
 
 <section id="updates">

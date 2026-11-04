@@ -6,7 +6,7 @@
 
 **Projektseite: [fmatsch.github.io/wienerlinien-live](https://fmatsch.github.io/wienerlinien-live/)** · **Im Browser: [fmatsch.ist/wienerlinien](https://fmatsch.ist/wienerlinien/)**
 
-Berechnete Live-Positionen aller Wiener U-Bahn-Züge (U1, U2, U3, U4, U6) und von 27 Straßenbahnlinien auf einer Karte.
+Berechnete Live-Positionen aller Wiener U-Bahn-Züge (U1, U2, U3, U4, U6), von 27 Straßenbahnlinien und von Bussen auf einer Karte.
 Die Wiener Linien liefern keine GPS-Daten, nur Abfahrtsprognosen pro Haltepunkt. Die Züge werden daraus rekonstruiert.
 Privates, inoffizielles Projekt. Die Apps enthalten alles Nötige und brauchen nur eine Internetverbindung.
 
@@ -41,15 +41,24 @@ Die Seite zeigt dazu ein Banner (`/_app.json` der lokalen Wrapper-Server).
 * **Hackberry:** lädt `wienerlinien-live-hackberry.tar.gz`, prüft SHA-256 gegen `SHA256SUMS.txt`, ersetzt sich
   (mit Rollback bei Fehlern) und startet nach „Neu starten“ neu.
 
+## Bus
+
+Dritter Modus im Umschalter oben links (`/#bus`). Bei rund 115 Buslinien gibt es keine Chip-Leiste für alle: Linien werden über
+das Feld „+ Linie“ ausgewählt (Eingabe oder Auswahlliste, höchstens 12 gleichzeitig, beim 13. fällt die älteste heraus).
+Die Auswahl wird gemerkt, Standard ist 13A und 48A. Der Server fragt nur die gewählten Linien ab (Limit: höchstens 300 Haltepunkte
+pro Zyklus). Das Netz wird mit `scripts/build_surface.py bus` aus GTFS und Live-Daten gebaut. **Nachtbusse (N…) fehlen:**
+sie laufen nur nachts, tagsüber lassen sich ihre Haltestellen nicht den Live-Haltepunkten zuordnen. Genauigkeit: wie bei der
+Straßenbahn, eher schlechter (Straßenverkehr).
+
 ## Aufbau
 
 ```
 web/              Frontend (Leaflet): Karte, Netzplan, Debug-Panel, Update-Banner
 backend/          Engine (Positionsberechnung), Poller + Cache + HTTP-API (nur Standardbibliothek)
-backend/data/     Netze: network.json (U-Bahn), network_tram.json (Straßenbahn)
+backend/data/     Netze: network.json (U-Bahn), network_tram.json (Straßenbahn), network_bus.json (Bus)
 app/              Electron-App für macOS und Windows
 hackberry/        Starter + Installer für Raspberry Pi / Linux (Chromium-App-Fenster)
-scripts/          Datenaufbereitung (GTFS → Netz), Pilot- und Messskripte
+scripts/          Datenaufbereitung (GTFS → Netz: build_network.py U-Bahn, build_surface.py Straßenbahn/Bus), Pilot- und Messskripte
 deploy/           systemd-Unit und Caddy-Snippet für den API-Server
 docs/             GitHub-Pages-Projektseite
 ```

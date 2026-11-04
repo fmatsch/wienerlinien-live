@@ -54,7 +54,9 @@ def allowed_origin(origin):
 # one network + poller per mode; the tram poller only runs while somebody looks at the tram view
 MODES = {
     'u': {'file': 'network.json', 'interval': INTERVAL, 'pause': 0.4},
-    'tram': {'file': 'network_tram.json', 'interval': max(INTERVAL, 60.0), 'pause': 0},
+    'tram': {'file': 'network_tram.json', 'interval': max(INTERVAL, 60.0), 'pause': 0, 'max_ids': 800},
+    # ~3500 stops in total: only the lines somebody looks at are polled, and never more than max_ids stops per cycle
+    'bus': {'file': 'network_bus.json', 'interval': max(INTERVAL, 60.0), 'pause': 0, 'max_ids': 300, 'default': ['13A']},
 }
 
 
@@ -90,9 +92,11 @@ def api_get(url, n_ids):
 class Poller(threading.Thread):
     daemon = True
 
-    def __init__(self, net, interval, wanted, mode='u', pause=0.4):
+    def __init__(self, net, interval, wanted, mode='u', pause=0.4, max_ids=None, default=None):
         super().__init__(name='poller-' + mode)
         self.mode = mode
+        self.max_ids = max_ids
+        self.default = default
         self.wanted = wanted
         self.pause = pause
         self.net = net
@@ -122,12 +126,22 @@ class Poller(threading.Thread):
         self.wake.set()
 
     def demanded(self):
+        """Lines to poll: the ones clients asked for recently, most recent first, within the stop budget."""
         now = time.time()
         if self.mode == 'u':
             return None
         names = self.net.tracks_lines()
-        d = {l for l, t in self.line_demand.items() if now - t < IDLE_AFTER and l in names}
-        return d or None if self.line_demand else None
+        recent = sorted(((t, l) for l, t in self.line_demand.items() if now - t < IDLE_AFTER and l in names), reverse=True)
+        if not recent:
+            return set(self.default) & names if self.default else None
+        chosen, ids = set(), set()
+        for _, l in recent:
+            more = set(self.net.rbls({l}))
+            if self.max_ids and chosen and len(ids | more) > self.max_ids:
+                continue
+            chosen.add(l)
+            ids |= more
+        return chosen
 
     def get(self, wait=20.0, lines=None):
         self.touch(lines)
@@ -240,7 +254,7 @@ class Handler(BaseHTTPRequestHandler):
         qlines = (parse_qs(url.query).get('lines') or [''])[0]
         qlines = [l for l in qlines.split(',') if l and len(l) <= 3][:40] or None
         if path == '/api/trains':
-            snap, st = p.get(40.0 if mode == 'tram' else 20.0, qlines if mode == 'tram' else None)
+            snap, st = p.get(40.0 if mode != 'u' else 20.0, qlines if mode != 'u' else None)
             if snap is None:
                 return self.send(503, json.dumps({'error': st['message'], 'status': st}).encode())
             age = time.time() - snap['ts']
@@ -288,7 +302,7 @@ def main():
         net = Network(json.loads(raw))
         Handler.network_json[mode] = raw
         names = set(net.tracks_lines())
-        Handler.pollers[mode] = Poller(net, cfg['interval'], lambda n, names=names: n in names, mode, cfg['pause'])
+        Handler.pollers[mode] = Poller(net, cfg['interval'], lambda n, names=names: n in names, mode, cfg['pause'], cfg.get('max_ids'), cfg.get('default'))
         Handler.pollers[mode].start()
         nets += len(net.rbls())
     srv = ThreadingHTTPServer((HOST, PORT), Handler)

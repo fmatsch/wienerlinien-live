@@ -168,3 +168,33 @@ class ReplayTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class DemandTests(unittest.TestCase):
+    """Surface modes poll only the lines somebody looks at, within a stop budget (the API limits stops per minute)."""
+
+    def setUp(self):
+        sys.path.insert(0, os.path.join(HERE, '..'))
+        import server
+        self.server = server
+        self.net = Network(json.load(open(os.path.join(HERE, '..', 'data', 'network_tram.json'))))
+        self.lines = sorted(self.net.tracks_lines())
+
+    def poller(self, max_ids, default=None):
+        return self.server.Poller(self.net, 60, lambda n: True, 'tram', 0, max_ids, default)
+
+    def test_only_requested_lines(self):
+        p = self.poller(None)
+        p.touch([self.lines[0]])
+        self.assertEqual(p.demanded(), {self.lines[0]})
+
+    def test_budget_limits_number_of_lines(self):
+        p = self.poller(120)
+        p.touch(self.lines)
+        got = p.demanded()
+        self.assertTrue(0 < len(got) < len(self.lines))
+        self.assertLessEqual(len(self.net.rbls(got)), 120 + 70)   # the first line may exceed it alone, never more than one line over
+
+    def test_default_when_nobody_asked(self):
+        p = self.poller(None, default=[self.lines[1]])
+        self.assertEqual(p.demanded(), {self.lines[1]})
