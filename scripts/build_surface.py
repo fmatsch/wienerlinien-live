@@ -46,8 +46,14 @@ def palette(names):
 # ---- which lines
 live_lines = {r['LineText'] for r in csv.DictReader(open('data/raw/wienerlinien-ogd-linien.csv'), delimiter=';')
               if r['MeansOfTransport'] in CFG['means'] and r['Realtime'] == '1'}
-ONLY = os.environ.get('BUILD_LINES')          # e.g. BUILD_LINES=13A,2A,48A for a quick subset while developing
-if ONLY:
+# BUILD_LINES=13A,2A,48A  quick subset while developing;  BUILD_LINES=night  only the night buses (they run ~00:30-05:00, so the
+# live candidate query only finds them then). BUILD_MERGE=1 merges the result into the existing network file instead of replacing it.
+ONLY = os.environ.get('BUILD_LINES')
+MERGE = os.environ.get('BUILD_MERGE') == '1'
+if ONLY == 'night':
+    live_lines = {r['LineText'] for r in csv.DictReader(open('data/raw/wienerlinien-ogd-linien.csv'), delimiter=';')
+                  if r['MeansOfTransport'] == 'ptBusNight' and r['Realtime'] == '1'}
+elif ONLY:
     live_lines &= set(ONLY.split(','))
 routes = {r['route_id']: r for r in rd('routes.txt') if r['route_type'] == CFG['route_type'] and r['route_short_name'] in live_lines}
 trips = {t['trip_id']: (routes[t['route_id']]['route_short_name'], t['direction_id'], t['shape_id'], t['trip_headsign'])
@@ -134,7 +140,7 @@ def fetch(ids):
 
 pool_file = 'data/raw/%s_pool%s.json' % (MODE, '_sub' if ONLY else '')
 pool = defaultdict(list)    # rbl -> [{line, dir, lat, lon}]
-if os.path.exists(pool_file):
+if os.path.exists(pool_file) and os.environ.get('BUILD_POOL_CACHE', '1') == '1':
     pool.update({int(k): v for k, v in json.load(open(pool_file)).items()})
     print('pool from cache:', len(pool), file=sys.stderr)
 else:
@@ -269,12 +275,25 @@ for line, v in net['lines'].items():
                 if abs(med - s['dep2dep']) <= 90:
                     s['dep2dep'] = float(med)
                     refined += 1
-for ln, cc in palette(list(net['lines'])).items():
-    net['lines'][ln]['color'] = cc
+out = 'backend/data/network_%s.json' % MODE
+if MERGE and os.path.exists(out):
+    old = json.load(open(out))
+    merged = dict(old['lines'])
+    merged.update(net['lines'])
+    colors = palette(sorted(merged, key=order))
+    for ln, v in net['lines'].items():
+        v['color'] = colors[ln]               # existing lines keep their colour
+    net['lines'] = merged
+    print('merged into existing network:', len(old['lines']), '+', len([l for l in net['lines'] if l not in old['lines']]), 'new lines')
+else:
+    for ln, cc in palette(list(net['lines'])).items():
+        net['lines'][ln]['color'] = cc
 for line, msg in report:
     print('line', line.ljust(4), msg)
 print('segments refined from live data:', refined)
-out = 'backend/data/network_%s.json' % MODE
+if ONLY and not MERGE:
+    out = 'backend/data/network_%s_subset.json' % MODE      # never overwrite the full network with a subset
 json.dump(net, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
-shutil.copy(out, 'web/network_%s.json' % MODE)
+if os.path.isdir('web'):
+    shutil.copy(out, 'web/' + os.path.basename(out))
 print('rbls to poll:', len(rbls), '| file size:', os.path.getsize(out) // 1024, 'kB')
