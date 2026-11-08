@@ -3,7 +3,7 @@
 Downloads the static data into fresh directories, runs build_surface.py for the night lines only and merges them into
 backend/data/network_bus.json.  Run from the repository root:   python3 scripts/run_night_build.py
 """
-import os, subprocess, sys, urllib.request, zipfile
+import os, subprocess, sys, time, zipfile
 
 BASE = 'https://www.wienerlinien.at/ogd_realtime/doku/ogd/'
 UA = {'User-Agent': 'wienerlinien-live/1.0 (+https://fmatsch.github.io/wienerlinien-live/; network build)'}
@@ -12,11 +12,14 @@ os.chdir(root)
 
 
 def fetch(url, dest):
+    """curl instead of urllib: the Wiener Linien firewall answers 429 to Python's urllib for the big GTFS file."""
     os.makedirs(os.path.dirname(dest), exist_ok=True)
-    print('download', url, flush=True)
-    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=300) as r, open(dest, 'wb') as f:
-        while chunk := r.read(1 << 20):
-            f.write(chunk)
+    for attempt in range(6):
+        print('download', url, '(attempt %d)' % (attempt + 1), flush=True)
+        if subprocess.run(['curl', '-fsSL', '-A', UA['User-Agent'], '-o', dest, url]).returncode == 0:
+            return
+        time.sleep(60 * (attempt + 1))
+    raise SystemExit('download failed: ' + url)
 
 
 fetch(BASE + 'wienerlinien-ogd-haltepunkte.csv', 'data/raw/wienerlinien-ogd-haltepunkte.csv')

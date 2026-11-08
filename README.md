@@ -46,8 +46,8 @@ Die Seite zeigt dazu ein Banner (`/_app.json` der lokalen Wrapper-Server).
 Dritter Modus im Umschalter oben links (`/#bus`). Bei rund 115 Buslinien gibt es keine Chip-Leiste für alle: Linien werden über
 das Feld „+ Linie“ ausgewählt (Eingabe oder Auswahlliste, höchstens 12 gleichzeitig, beim 13. fällt die älteste heraus).
 Die Auswahl wird gemerkt, Standard ist 13A und 48A. Der Server fragt nur die gewählten Linien ab (Limit: höchstens 300 Haltepunkte
-pro Zyklus). Das Netz wird mit `scripts/build_surface.py bus` aus GTFS und Live-Daten gebaut. **Nachtbusse (N…) fehlen:**
-sie laufen nur nachts, tagsüber lassen sich ihre Haltestellen nicht den Live-Haltepunkten zuordnen. Genauigkeit: wie bei der
+pro Zyklus). Das Netz wird mit `scripts/build_surface.py bus` aus GTFS und Live-Daten gebaut. **Nachtbusse (N…)** sind seit v1.1.1 dabei (19 Linien, N23 fehlt):
+sie wurden nachts mit `scripts/run_night_build.py` gebaut, tagsüber lassen sich ihre Haltestellen nicht den Live-Haltepunkten zuordnen. Genauigkeit: wie bei der
 Straßenbahn, eher schlechter (Straßenverkehr).
 
 ## Aufbau
