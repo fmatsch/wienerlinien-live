@@ -198,3 +198,49 @@ class DemandTests(unittest.TestCase):
     def test_default_when_nobody_asked(self):
         p = self.poller(None, default=[self.lines[1]])
         self.assertEqual(p.demanded(), {self.lines[1]})
+
+
+class ScheduleTests(unittest.TestCase):
+    """S-Bahn mode: positions from the timetable only."""
+
+    def setUp(self):
+        sys.path.insert(0, os.path.join(HERE, '..'))
+        from schedule import ScheduleSource
+        sts = [{'diva': i, 'name': 'S%d' % i, 'rbl': None, 'lat': 48.0, 'lon': 16.0 + i * 0.01, 's': i * 1000.0, 'dep2dep': None} for i in range(3)]
+        path = [[48.0, 16.0], [48.0, 16.02]]
+        d = {'towards': 'S2', 'dwell': 0, 'stations': sts, 'path': path, 'cum': [0.0, 2000.0]}
+        net = {'schedule': True, 'lines': {'S9': {'color': '#000', 'dirs': {'H': d, 'R': d}}}}
+        # Tuesday 2026-11-10 service, trip 10:00 -> 10:10 (S0 dep 10:00, S1 arr 10:04 dep 10:05, S2 arr 10:10)
+        tt = {'valid_from': 20251214, 'valid_to': 20261212,
+              'services': {'wk': {'d': '1111100', 'a': 20251214, 'b': 20261212, 'add': [], 'rem': [20261224]}},
+              'trips': [{'l': 'S9', 'd': 'H', 'svc': 'wk', 'h': 'S2', 'n': 'S 1', 'p': [[0.0, 36000, 36000], [1000.0, 36240, 36300], [2000.0, 36600, 36600]]}]}
+        self.src = ScheduleSource(net, tt)
+        import calendar, time as _t
+        self.at = lambda h, m: calendar.timegm((2026, 11, 10, h, m, 0)) - 3600   # winter time: UTC = local - 1 h
+
+    def test_between_stops_interpolates(self):
+        tr = self.src.trains(self.at(10, 2))             # 2 of 4 minutes between S0 and S1
+        self.assertEqual(len(tr), 1)
+        self.assertAlmostEqual(tr[0]['s'], 500.0, delta=2)
+        self.assertTrue(tr[0]['schedule'])
+
+    def test_dwelling_at_station(self):
+        tr = self.src.trains(self.at(10, 4) + 30)        # S1 arrival 10:04, departure 10:05
+        self.assertAlmostEqual(tr[0]['s'], 1000.0, delta=1)
+        self.assertTrue(tr[0]['at_station'])
+
+    def test_not_running_outside_the_trip_and_on_weekends(self):
+        self.assertEqual(self.src.trains(self.at(9, 59)), [])
+        self.assertEqual(self.src.trains(self.at(10, 11)), [])
+        import calendar
+        saturday = calendar.timegm((2026, 11, 14, 10, 2, 0)) - 3600
+        self.assertEqual(self.src.trains(saturday), [])
+
+    def test_vienna_offset_follows_the_eu_rule(self):
+        import calendar
+        from schedule import vienna_offset
+        self.assertEqual(vienna_offset(calendar.timegm((2026, 7, 1, 12, 0, 0))), 7200)
+        self.assertEqual(vienna_offset(calendar.timegm((2026, 12, 1, 12, 0, 0))), 3600)
+        self.assertEqual(vienna_offset(calendar.timegm((2026, 3, 29, 0, 59, 0))), 3600)    # just before the switch
+        self.assertEqual(vienna_offset(calendar.timegm((2026, 3, 29, 1, 1, 0))), 7200)
+        self.assertEqual(vienna_offset(calendar.timegm((2026, 10, 25, 1, 1, 0))), 3600)

@@ -25,6 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from engine import Engine, Network, meetings, parse_monitor
+from schedule import ScheduleSource
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT.parent / 'web'
@@ -56,6 +57,8 @@ MODES = {
     'u': {'file': 'network.json', 'interval': INTERVAL, 'pause': 0.4},
     'tram': {'file': 'network_tram.json', 'interval': max(INTERVAL, 60.0), 'pause': 0, 'max_ids': 800},
     # ~3500 stops in total: only the lines somebody looks at are polled, and never more than max_ids stops per cycle
+    # no open real-time feed for the S-Bahn: positions come from the ÖBB timetable only (no polling, no API quota)
+    'sbahn': {'file': 'network_sbahn.json', 'timetable': 'timetable_sbahn.json'},
     'bus': {'file': 'network_bus.json', 'interval': max(INTERVAL, 60.0), 'pause': 0, 'max_ids': 300, 'default': ['13A']},
 }
 
@@ -222,6 +225,7 @@ class Poller(threading.Thread):
 class Handler(BaseHTTPRequestHandler):
     server_version = 'wl-ubahn'
     pollers = {}
+    schedules = {}
     network_json = {}
 
     def log_message(self, fmt, *args):
@@ -244,10 +248,34 @@ class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send(204, b'')
 
+    def schedule_reply(self, path, mode, query):
+        src = self.schedules[mode]
+        if path == '/api/network':
+            return self.send(200, self.network_json[mode], cache='public, max-age=300')
+        if path in ('/api/trains', '/api/debug'):
+            now = time.time()
+            wanted = [l for l in ((query.get('lines') or [''])[0]).split(',') if l]
+            trains = [t for t in src.trains(now) if not wanted or t['line'] in wanted]
+            today = time.strftime('%Y%m%d', time.gmtime(now + 3600))
+            expired = int(today) > src.valid[1]
+            if path == '/api/debug':
+                body = {'status': {'ok': True, 'message': 'Fahrplan', 'polls': 0, 'failures': 0},
+                        'snapshot': {'ts': now, 'trains': trains, 'stations': {}, 'on_stop_seen': False}}
+            else:
+                body = {'ts': now, 'now': now, 'age': 0.0, 'poll_interval': 15.0, 'ok': not expired,
+                        'message': 'Fahrplan abgelaufen' if expired else 'Fahrplan', 'schedule': True, 'loading': False,
+                        'valid_to': src.valid[1], 'trains': trains}
+            return self.send(200, json.dumps(body, ensure_ascii=False, separators=(',', ':')).encode())
+        if path == '/api/health':
+            return self.send(200, json.dumps({'mode': mode, 'schedule': True, 'valid_to': src.valid[1]}).encode())
+        self.send(404, b'{"error":"not found"}')
+
     def do_GET(self):
         url = urlparse(self.path)
         path = url.path
         mode = (parse_qs(url.query).get('mode') or ['u'])[0]
+        if mode in self.schedules:
+            return self.schedule_reply(path, mode, parse_qs(url.query))
         if mode not in self.pollers:
             return self.send(400, b'{"error":"unknown mode"}')
         p = self.pollers[mode]
@@ -299,6 +327,12 @@ def main():
         if not f.exists():
             continue
         raw = f.read_bytes()
+        if cfg.get('timetable'):
+            tt = ROOT / 'data' / cfg['timetable']
+            if tt.exists():
+                Handler.network_json[mode] = raw
+                Handler.schedules[mode] = ScheduleSource(json.loads(raw), json.loads(tt.read_text()))
+            continue
         net = Network(json.loads(raw))
         Handler.network_json[mode] = raw
         names = set(net.tracks_lines())
@@ -306,7 +340,7 @@ def main():
         Handler.pollers[mode].start()
         nets += len(net.rbls())
     srv = ThreadingHTTPServer((HOST, PORT), Handler)
-    print('U-Bahn/Tram live map on http://%s:%d  (poll every %ss, %d stops, modes: %s)' % (HOST, PORT, INTERVAL, nets, ', '.join(Handler.pollers)), flush=True)
+    print('U-Bahn/Tram live map on http://%s:%d  (poll every %ss, %d stops, modes: %s)' % (HOST, PORT, INTERVAL, nets, ', '.join(list(Handler.pollers) + list(Handler.schedules))), flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

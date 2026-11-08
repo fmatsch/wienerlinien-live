@@ -6,7 +6,7 @@
 
 **Projektseite: [fmatsch.github.io/wienerlinien-live](https://fmatsch.github.io/wienerlinien-live/)** · **Im Browser: [fmatsch.ist/wienerlinien](https://fmatsch.ist/wienerlinien/)**
 
-Berechnete Live-Positionen aller Wiener U-Bahn-Züge (U1, U2, U3, U4, U6), von 27 Straßenbahnlinien und von Bussen auf einer Karte.
+Berechnete Live-Positionen aller Wiener U-Bahn-Züge (U1, U2, U3, U4, U6), von 27 Straßenbahnlinien, von Bussen und (nur nach Fahrplan) der S-Bahn auf einer Karte.
 Die Wiener Linien liefern keine GPS-Daten, nur Abfahrtsprognosen pro Haltepunkt. Die Züge werden daraus rekonstruiert.
 Privates, inoffizielles Projekt. Die Apps enthalten alles Nötige und brauchen nur eine Internetverbindung.
 
@@ -50,12 +50,29 @@ pro Zyklus). Das Netz wird mit `scripts/build_surface.py bus` aus GTFS und Live-
 sie wurden nachts mit `scripts/run_night_build.py` gebaut, tagsüber lassen sich ihre Haltestellen nicht den Live-Haltepunkten zuordnen. Genauigkeit: wie bei der
 Straßenbahn, eher schlechter (Straßenverkehr).
 
+## S-Bahn (nur Fahrplan)
+
+Vierter Modus im Umschalter (`/#sbahn`). Für die S-Bahn gibt es keine offene Echtzeit-Schnittstelle, die Wiener Linien führen S1–S80
+mit `Realtime=0`, und die ÖBB bieten über data.oebb.at nur Fahrplandaten. Die Positionen kommen deshalb **ausschließlich aus dem
+ÖBB-Fahrplan** (GTFS, 10 Linien S1, S2, S3, S4, S7, S40, S45, S50, S60, S80, 3189 Fahrten). Verspätungen, Ausfälle und Umleitungen
+sieht man nicht. Die Markierungen sind hohl und gestrichelt, in der Statuszeile steht „nur Fahrplan, keine Echtzeit“.
+Der Server rechnet die Positionen bei jeder Abfrage aus dem Fahrplan (`backend/schedule.py`), es wird nichts bei den Wiener Linien
+oder ÖBB abgefragt. Bei Linien mit Abzweigen (z. B. S2, S1 nach Marchegg) liegt nur die längste Strecke als Geometrie vor, Fahrten
+auf den anderen Ästen verschwinden an der Abzweigung.
+
+Der Fahrplan gilt bis **12.12.2026**; danach muss er neu gebaut werden. Der Download braucht die Bestätigung der ÖBB-Nutzungsbedingungen
+im Portal (https://data.oebb.at/de/datensaetze~soll-fahrplan-gtfs~), deshalb gibt es dafür kein automatisches Setup:
+
+```bash
+python3 -I scripts/build_sbahn.py <entpacktes GTFS-Verzeichnis>      # schreibt backend/data/network_sbahn.json + timetable_sbahn.json
+```
+
 ## Aufbau
 
 ```
 web/              Frontend (Leaflet): Karte, Netzplan, Debug-Panel, Update-Banner
 backend/          Engine (Positionsberechnung), Poller + Cache + HTTP-API (nur Standardbibliothek)
-backend/data/     Netze: network.json (U-Bahn), network_tram.json (Straßenbahn), network_bus.json (Bus)
+backend/data/     Netze: network.json (U-Bahn), network_tram.json (Straßenbahn), network_bus.json (Bus), network_sbahn.json + timetable_sbahn.json (S-Bahn)
 app/              Electron-App für macOS und Windows
 hackberry/        Starter + Installer für Raspberry Pi / Linux (Chromium-App-Fenster)
 scripts/          Datenaufbereitung (GTFS → Netz: build_network.py U-Bahn, build_surface.py Straßenbahn/Bus), Pilot- und Messskripte
@@ -97,4 +114,5 @@ Straßenbahn fragt nur die gerade eingeblendeten Linien ab.
 ## Datenquellen und Rechtliches
 
 Stadt Wien – data.wien.gv.at / Wiener Linien (CC BY 4.0), Grundkarte basemap.at (CC BY 4.0).
+S-Bahn-Fahrplan: ÖBB-Personenverkehr AG, data.oebb.at (CC BY 4.0), bearbeitet (Auswahl der Wiener S-Bahn-Linien, Zuordnung der Halte zur Streckengeometrie, Berechnung der Positionen).
 Kein offizielles Angebot der Wiener Linien; die Positionen sind berechnet und keine verbindliche Auskunft.
